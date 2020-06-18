@@ -1,0 +1,11 @@
+#BlueJ class context
+comment0.target=Player
+comment1.params=name\ cards
+comment1.target=Player(java.lang.String,\ java.util.ArrayList)
+comment2.params=
+comment2.target=void\ sortCards()
+comment3.params=
+comment3.target=java.lang.String\ checkCards()
+comment4.params=
+comment4.target=java.lang.String\ getName()
+numComments=5

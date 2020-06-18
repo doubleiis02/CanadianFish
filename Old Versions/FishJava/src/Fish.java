@@ -1,3 +1,5 @@
+package FishJava.src;
+
 import java.util.*;
 
 public class Fish
@@ -146,11 +148,11 @@ public class Fish
             // converting who_to_ask from a String to player type AGAIN
             if (who_to_ask.equals(player.name))
                 personAsked = player;
-            if (who_to_ask.equals(carl.name))
+            else if (who_to_ask.equals(carl.name))
                 personAsked = carl;
-            if (who_to_ask.equals(bob.name))
+            else if (who_to_ask.equals(bob.name))
                 personAsked = bob;
-            if (who_to_ask.equals(amy.name))
+            else
                 personAsked = amy;
 
             if (personAsked == player || personAsked == carl || personAsked.cards.isEmpty())
@@ -307,7 +309,7 @@ public class Fish
                     bob.amy_hyp.put(card, 0.0);
                 }
 
-                // changing carl.player_hyp(other cards in set that player might have)
+                )// changing carl.player_hyp(other cards in set that player might have)
                 double num = 0, n;
                 for (int i = 0; i < cards.whole_deck.size(); i++)
                 {
@@ -531,6 +533,37 @@ public class Fish
     public static String[] choose_card(Player bot, Player player, Carl carl, Bob bob, Amy amy)
     {
         // return the person to ask and the card....as a String[]
+        List<Player> playersToAsk = new ArrayList<>();
+        List<String> emptycards = new ArrayList<>();
+        if (bot == Carl)
+        {
+            if (amy.cards.equals(emptycards))
+                playersToAsk.add(bob);
+            else if (bob.cards.equals(emptycards))
+                playersToAsk.add(amy);
+            else
+            {
+                playersToAsk.add(bob);
+                playersToAsk.add(amy);
+            }
+        }
+        else
+        {
+            if (carl.cards.equals(emptycards))
+                playersToAsk.add(player);
+            else if (player.cards.equals(emptycards))
+                playersToAsk.add(carl);
+            else
+            {
+                playersToAsk.add(player); playersToAsk.add(carl);
+            }
+        }
+
+        // looking for ones
+
+
+        // looking for the next greatest values
+
     }
 
 }

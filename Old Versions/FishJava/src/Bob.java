@@ -1,3 +1,5 @@
+package FishJava.src;
+
 import java.util.*;
 
 public class Bob extends Player
