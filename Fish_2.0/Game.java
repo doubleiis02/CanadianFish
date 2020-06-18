@@ -439,7 +439,7 @@ public class Game
         
         return player.turn;
       }
-      else // if personAsked doesn't have the card
+      else if (!personAsked.cards.contains(card)) // if personAsked doesn't have the card
       {
         System.out.println(personAsked.getName() + " does not have that card.");
         
@@ -451,6 +451,11 @@ public class Game
         adjustProbsPlayer(set);
         
         return personAsked.turn;
+      }
+      else
+      {
+        System.out.println("error");
+        return player.turn;
       }
     }
     
@@ -518,9 +523,43 @@ public class Game
       for (String c : set)
       {
         index = deck.order.indexOf(c);
+          
+        if (b == partner)
+        {
+          if (!b.cards.contains(deck.order.get(index)))
+          {
+            if (b.opp2_prob.get(index) != 1.0 && b.player_prob.get(index) == 0.0 && b.opp1_prob.get(index) == 0.0)
+              b.opp2_prob.set(index, 1.0);
+            else if (b.opp1_prob.get(index) != 1.0 && b.player_prob.get(index) == 0.0 && b.opp2_prob.get(index) == 0.0)
+              b.opp1_prob.set(index, 1.0);
+          }
+        }
+        else if (b == opponent1)
+        {
+          if (!b.cards.contains(deck.order.get(index)))
+          {
+            if (b.opp2_prob.get(index) != 1.0 && b.player_prob.get(index) == 0.0 && b.partner_prob.get(index) == 0.0)
+              b.opp2_prob.set(index, 1.0);
+            else if (b.partner_prob.get(index) != 1.0 && b.player_prob.get(index) == 0.0 && b.opp2_prob.get(index) == 0.0)
+              b.partner_prob.set(index, 1.0);
+          }
+        }
+        else // b == opponent2
+        {
+          if (!b.cards.contains(deck.order.get(index)))
+          {
+            if (b.opp1_prob.get(index) != 1.0 && b.player_prob.get(index) == 0.0 && b.partner_prob.get(index) == 0.0)
+              b.opp1_prob.set(index, 1.0);
+            else if (b.partner_prob.get(index) != 1.0 && b.player_prob.get(index) == 0.0 && b.opp1_prob.get(index) == 0.0)
+              b.partner_prob.set(index, 1.0);
+          }
+        }
+        
+        
         if (b.player_prob.get(index) != 0.0 && b.player_prob.get(index) < 1.0)
           prob++;
       }
+      
       if (prob > 0.0)
       {
         prob = 1/prob;
@@ -528,7 +567,7 @@ public class Game
         {
           index = deck.order.indexOf(c);
           if (b.player_prob.get(index) != 0.0 && b.player_prob.get(index) < 1.0)
-            b.player_prob.set(index, b.player_prob.get(index) + prob);
+            b.player_prob.set(index, prob);
         }
       }
     }
@@ -683,7 +722,7 @@ public class Game
     int search = playersToAsk.get((int)(Math.random() * playersToAsk.size()));
     String name = "";
     String card = "";
-    double max = 0.0;
+    double max = -1.0;
     double prob;
     String c;
     Bot b;
@@ -699,76 +738,17 @@ public class Game
         b = opponent2;
     }
     
+    deck.shuffle();
     // looking for greatest prob values
     if (search == 0)
     {
       // search player first
-      for (int i = 0; i < deck.order.size(); i++)
+      for (int i = 0; i < deck.whole_deck.size(); i++)
       {
         prob = b.player_prob.get(i);
-        c = deck.order.get(i);
-        if (prob == 1.0 && personHasSet(turn, whichSet(c)))
+        c = deck.whole_deck.get(i);
+        if (!b.cards.contains(c))
         {
-          String[] list = {player.getName(), c};
-          return list;
-        }
-        if (prob > max && personHasSet(turn, whichSet(c)))
-        {
-          max = prob;
-          card = c;
-          name = player.getName();
-        }
-      }
-      // search partner second if not empty
-      if (!partner.cards.isEmpty())
-      {
-        for (int i = 0; i < deck.order.size(); i++)
-        {
-          prob = b.partner_prob.get(i);
-          c = deck.order.get(i);
-          if (prob == 1.0 && personHasSet(turn, whichSet(c)))
-          {
-            String[] list = {partner.getName(), c};
-            return list;
-          }
-          if (prob > max && personHasSet(turn, whichSet(c)))
-          {
-            max = prob;
-            card = c;
-            name = partner.getName();
-          }
-        }
-      }
-      // return name and card w max prob, if not done already
-      String[] list = {name, card};
-      return list;
-    }
-    else if (search == 1)
-    {
-      // search partner first
-      for (int i = 0; i < deck.order.size(); i++)
-      {
-        prob = b.partner_prob.get(i);
-        c = deck.order.get(i);
-        if (prob == 1.0 && personHasSet(turn, whichSet(c)))
-        {
-          String[] list = {partner.getName(), c};
-          return list;
-        }
-        if (prob > max && personHasSet(turn, whichSet(c)))
-        {
-          max = prob;
-          card = c;
-          name = partner.getName();
-        }
-      }
-      // search player second if not empty
-      if (!player.cards.isEmpty())
-      {
-        for (int i = 0; i < deck.order.size(); i++)
-        {
-          prob = b.player_prob.get(i);
-          c = deck.order.get(i);
           if (prob == 1.0 && personHasSet(turn, whichSet(c)))
           {
             String[] list = {player.getName(), c};
@@ -782,6 +762,78 @@ public class Game
           }
         }
       }
+      // search partner second if not empty
+      if (!partner.cards.isEmpty())
+      {
+        for (int i = 0; i < deck.whole_deck.size(); i++)
+        {
+          prob = b.partner_prob.get(i);
+          c = deck.whole_deck.get(i);
+          if (!b.cards.contains(c))
+          {
+            if (prob == 1.0 && personHasSet(turn, whichSet(c)))
+            {
+              String[] list = {partner.getName(), c};
+              return list;
+            }
+            if (prob > max && personHasSet(turn, whichSet(c)))
+            {
+              max = prob;
+              card = c;
+              name = partner.getName();
+            }
+          }
+        }
+      }
+      // return name and card w max prob, if not done already
+      String[] list = {name, card};
+      return list;
+    }
+    else if (search == 1)
+    {
+      // search partner first
+      for (int i = 0; i < deck.whole_deck.size(); i++)
+      {
+        prob = b.partner_prob.get(i);
+        c = deck.whole_deck.get(i);
+        if (!b.cards.contains(c))
+        {
+          if (prob == 1.0 && personHasSet(turn, whichSet(c)))
+          {
+            String[] list = {partner.getName(), c};
+            return list;
+          }
+          if (prob > max && personHasSet(turn, whichSet(c)))
+          {
+            max = prob;
+            card = c;
+            name = partner.getName();
+          }
+        }
+      }
+      // search player second if not empty
+      if (!player.cards.isEmpty())
+      {
+        for (int i = 0; i < deck.whole_deck.size(); i++)
+        {
+          prob = b.player_prob.get(i);
+          c = deck.whole_deck.get(i);
+          if (!b.cards.contains(c))
+          {
+            if (prob == 1.0 && personHasSet(turn, whichSet(c)))
+            {
+              String[] list = {player.getName(), c};
+              return list;
+            }
+            if (prob > max && personHasSet(turn, whichSet(c)))
+            {
+              max = prob;
+              card = c;
+              name = player.getName();
+            }
+          }
+        }
+      }
       // return name and card w max prob, if not done already
       String[] list = {name, card};
       return list;
@@ -789,29 +841,61 @@ public class Game
     else if (search == 2)
     {
       // search opponent1 first
-      for (int i = 0; i < deck.order.size(); i++)
+      for (int i = 0; i < deck.whole_deck.size(); i++)
       {
         prob = b.opp1_prob.get(i);
-        c = deck.order.get(i);
-        if (prob == 1.0 && personHasSet(turn, whichSet(c)))
+        c = deck.whole_deck.get(i);
+        if (!b.cards.contains(c))
         {
-          String[] list = {opponent1.getName(), c};
-          return list;
-        }
-        if (prob > max && personHasSet(turn, whichSet(c)))
-        {
-          max = prob;
-          card = c;
-          name = opponent1.getName();
+          if (prob == 1.0 && personHasSet(turn, whichSet(c)))
+          {
+            String[] list = {opponent1.getName(), c};
+            return list;
+          }
+          if (prob > max && personHasSet(turn, whichSet(c)))
+          {
+            max = prob;
+            card = c;
+            name = opponent1.getName();
+          }
         }
       }
       // search opponent2 second if not empty
       if (!opponent2.cards.isEmpty())
       {
-        for (int i = 0; i < deck.order.size(); i++)
+        for (int i = 0; i < deck.whole_deck.size(); i++)
         {
           prob = b.opp2_prob.get(i);
-          c = deck.order.get(i);
+          c = deck.whole_deck.get(i);
+          if (!b.cards.contains(c))
+          {
+            if (prob == 1.0 && personHasSet(turn, whichSet(c)))
+            {
+              String[] list = {opponent2.getName(), c};
+              return list;
+            }
+            if (prob > max && personHasSet(turn, whichSet(c)))
+            {
+              max = prob;
+              card = c;
+              name = opponent2.getName();
+            }
+          }
+        }
+      }
+      // return name and card w max prob, if not done already
+      String[] list = {name, card};
+      return list;
+    }
+    else // if search == 3
+    {
+      // search opponent2 first
+      for (int i = 0; i < deck.whole_deck.size(); i++)
+      {
+        prob = b.opp2_prob.get(i);
+        c = deck.whole_deck.get(i);
+        if (!b.cards.contains(c))
+        {
           if (prob == 1.0 && personHasSet(turn, whichSet(c)))
           {
             String[] list = {opponent2.getName(), c};
@@ -825,46 +909,26 @@ public class Game
           }
         }
       }
-      // return name and card w max prob, if not done already
-      String[] list = {name, card};
-      return list;
-    }
-    else // if search == 3
-    {
-      // search opponent2 first
-      for (int i = 0; i < deck.order.size(); i++)
-      {
-        prob = b.opp2_prob.get(i);
-        c = deck.order.get(i);
-        if (prob == 1.0 && personHasSet(turn, whichSet(c)))
-        {
-          String[] list = {opponent2.getName(), c};
-          return list;
-        }
-        if (prob > max && personHasSet(turn, whichSet(c)))
-        {
-          max = prob;
-          card = c;
-          name = opponent2.getName();
-        }
-      }
       // search opponent1 second if not empty
       if (!opponent1.cards.isEmpty())
       {
-        for (int i = 0; i < deck.order.size(); i++)
+        for (int i = 0; i < deck.whole_deck.size(); i++)
         {
           prob = b.opp1_prob.get(i);
-          c = deck.order.get(i);
-          if (prob == 1.0 && personHasSet(turn, whichSet(c)))
+          c = deck.whole_deck.get(i);
+          if (!b.cards.contains(c))
           {
-            String[] list = {opponent1.getName(), c};
-            return list;
-          }
-          if (prob > max && personHasSet(turn, whichSet(c)))
-          {
-            max = prob;
-            card = c;
-            name = opponent1.getName();
+            if (prob == 1.0 && personHasSet(turn, whichSet(c)))
+            {
+              String[] list = {opponent1.getName(), c};
+              return list;
+            }
+            if (prob > max && personHasSet(turn, whichSet(c)))
+            {
+              max = prob;
+              card = c;
+              name = opponent1.getName();
+            }
           }
         }
       }
@@ -1090,6 +1154,28 @@ public class Game
         for (String c : set)
         {
           index = deck.order.indexOf(c);
+          
+          if (b == opponent1)
+          {
+            if (!b.cards.contains(deck.order.get(index)))
+            {
+              if (b.opp2_prob.get(index) != 1.0 && b.player_prob.get(index) == 0.0 && b.partner_prob.get(index) == 0.0)
+                b.opp2_prob.set(index, 1.0);
+              else if (b.player_prob.get(index) != 1.0 && b.partner_prob.get(index) == 0.0 && b.opp2_prob.get(index) == 0.0)
+                b.player_prob.set(index, 1.0);
+            }
+          }
+          else if (b == opponent2)
+          {
+            if (!b.cards.contains(deck.order.get(index)))
+            {
+              if (b.opp1_prob.get(index) != 1.0 && b.player_prob.get(index) == 0.0 && b.partner_prob.get(index) == 0.0)
+                b.opp1_prob.set(index, 1.0);
+              else if (b.player_prob.get(index) != 1.0 && b.partner_prob.get(index) == 0.0 && b.opp1_prob.get(index) == 0.0)
+                b.player_prob.set(index, 1.0);
+            }
+          }
+          
           if (b.partner_prob.get(index) != 0.0 && b.partner_prob.get(index) < 1.0)
             prob++;
         }
@@ -1100,7 +1186,7 @@ public class Game
           {
             index = deck.order.indexOf(c);
             if (b.partner_prob.get(index) != 0.0 && b.partner_prob.get(index) < 1.0)
-              b.partner_prob.set(index, b.partner_prob.get(index) + prob);
+              b.partner_prob.set(index, prob);
           }
         }
       }
@@ -1112,9 +1198,32 @@ public class Game
         for (String c : set)
         {
           index = deck.order.indexOf(c);
+          
+          if (b == partner)
+          {
+            if (!b.cards.contains(deck.order.get(index)))
+            {
+              if (b.player_prob.get(index) != 1.0 && b.opp1_prob.get(index) == 0.0 && b.opp2_prob.get(index) == 0.0)
+                b.player_prob.set(index, 1.0);
+              else if (b.opp2_prob.get(index) != 1.0 && b.player_prob.get(index) == 0.0 && b.opp1_prob.get(index) == 0.0)
+                b.opp2_prob.set(index, 1.0);
+            }
+          }
+          else if (b == opponent2)
+          {
+            if (!b.cards.contains(deck.order.get(index)))
+            {
+              if (b.player_prob.get(index) != 1.0 && b.partner_prob.get(index) == 0.0 && b.opp1_prob.get(index) == 0.0)
+                b.player_prob.set(index, 1.0);
+              else if (b.partner_prob.get(index) != 1.0 && b.player_prob.get(index) == 0.0 && b.opp1_prob.get(index) == 0.0)
+                b.partner_prob.set(index, 1.0);
+            }
+          }
+          
           if (b.opp1_prob.get(index) != 0.0 && b.opp1_prob.get(index) < 1.0)
             prob++;
         }
+        
         if (prob > 0.0)
         {
           prob = 1/prob;
@@ -1122,7 +1231,7 @@ public class Game
           {
             index = deck.order.indexOf(c);
             if (b.opp1_prob.get(index) != 0.0 && b.opp1_prob.get(index) < 1.0)
-              b.opp1_prob.set(index, b.opp1_prob.get(index) + prob);
+              b.opp1_prob.set(index, prob);
           }
         }
       }
@@ -1134,6 +1243,28 @@ public class Game
         for (String c : set)
         {
           index = deck.order.indexOf(c);
+          
+          if (b == opponent1)
+          {
+            if (!b.cards.contains(deck.order.get(index)))
+            {
+              if (b.player_prob.get(index) != 1.0 && b.partner_prob.get(index) == 0.0 && b.opp2_prob.get(index) == 0.0)
+                b.player_prob.set(index, 1.0);
+              else if (b.partner_prob.get(index) != 1.0 && b.player_prob.get(index) == 0.0 && b.opp2_prob.get(index) == 0.0)
+                b.partner_prob.set(index, 1.0);
+            }
+          }
+          else if (b == partner)
+          {
+            if (!b.cards.contains(deck.order.get(index)))
+            {
+              if (b.player_prob.get(index) != 1.0 && b.opp1_prob.get(index) == 0.0 && b.opp2_prob.get(index) == 0.0)
+                b.player_prob.set(index, 1.0);
+              else if (b.opp1_prob.get(index) != 1.0 && b.player_prob.get(index) == 0.0 && b.opp2_prob.get(index) == 0.0)
+                b.opp1_prob.set(index, 1.0);
+            }
+          }
+          
           if (b.opp2_prob.get(index) != 0.0 && b.opp2_prob.get(index) < 1.0)
             prob++;
         }
@@ -1144,7 +1275,7 @@ public class Game
           {
             index = deck.order.indexOf(c);
             if (b.opp2_prob.get(index) != 0.0 && b.opp2_prob.get(index) < 1.0)
-              b.opp2_prob.set(index, b.opp2_prob.get(index) + prob);
+              b.opp2_prob.set(index, prob);
           }
         }
       }
